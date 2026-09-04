@@ -9,8 +9,9 @@ final class FlashRepository
 {
     private FlashMediaRepository $media;
     private FlashIntelligenceRepository $intelligence;
+    private FlashEngagementRepository $engagement;
 
-    public function __construct() { $this->media=new FlashMediaRepository(); $this->intelligence=new FlashIntelligenceRepository(); }
+    public function __construct() { $this->media=new FlashMediaRepository(); $this->intelligence=new FlashIntelligenceRepository(); $this->engagement=new FlashEngagementRepository(); }
 
     public function create(int $userId,int $categoryId,int $sourceTypeId,string $description,float $lat,float $lng,?string $areaName,int $expiresAfterMinutes): array
     {
@@ -77,6 +78,6 @@ final class FlashRepository
     {
         $status=$row['lifecycle_status'];if($status==='active'&&strtotime($row['expires_at'].' UTC')<=time())$status='expired';
         $intel=$this->intelligence->forFlash((int)$row['id']);
-        return ['id'=>(int)$row['id'],'category'=>['key'=>$row['category_key'],'name'=>$row['category_name'],'icon'=>$row['category_icon']],'status'=>$status,'verification_state'=>$row['verification_state'],'description'=>$row['description'],'location'=>['lat'=>(float)$row['lat'],'lng'=>(float)$row['lng'],'area_name'=>$row['area_name']],'distance_km'=>$row['distance_m']===null?null:round(((float)$row['distance_m'])/1000,2),'reporter'=>['id'=>(int)$row['user_id'],'display_name'=>$row['display_name']],'confirm_count'=>(int)$row['confirm_count'],'dispute_count'=>(int)$row['dispute_count'],'intelligence'=>['confidence_score'=>(float)$intel['confidence_score'],'state'=>$intel['state'],'last_evaluated_at'=>$intel['last_evaluated_at']],'created_at'=>$row['created_at'],'expires_at'=>$row['expires_at'],'media'=>$this->media->forFlash((int)$row['id'])];
+        return ['id'=>(int)$row['id'],'category'=>['key'=>$row['category_key'],'name'=>$row['category_name'],'icon'=>$row['category_icon']],'status'=>$status,'verification_state'=>$row['verification_state'],'description'=>$row['description'],'location'=>['lat'=>(float)$row['lat'],'lng'=>(float)$row['lng'],'area_name'=>$row['area_name']],'distance_km'=>$row['distance_m']===null?null:round(((float)$row['distance_m'])/1000,2),'reporter'=>['id'=>(int)$row['user_id'],'display_name'=>$row['display_name']],'confirm_count'=>(int)$row['confirm_count'],'dispute_count'=>(int)$row['dispute_count'],'intelligence'=>['confidence_score'=>(float)$intel['confidence_score'],'state'=>$intel['state'],'last_evaluated_at'=>$intel['last_evaluated_at']],'engagement'=>$this->engagement->stats((int)$row['id']),'created_at'=>$row['created_at'],'expires_at'=>$row['expires_at'],'media'=>$this->media->forFlash((int)$row['id'])];
     }
 }
