@@ -10,6 +10,14 @@ use PDOException;
 
 final class FlashReportRepository
 {
+    public function openCount(int $flashId): int
+    {
+        $statement = Connection::get()->prepare('SELECT COUNT(*) FROM flash_reports WHERE flash_id = :flash_id AND status = \'open\'');
+        $statement->execute(['flash_id' => $flashId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function create(int $flashId, int $userId, string $reason, ?string $description): array
     {
         $pdo = Connection::get();
