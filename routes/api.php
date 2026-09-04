@@ -29,8 +29,8 @@ return static function (Router $router): void {
     $router->get('/v1/modes', [$modes, 'index']);
     $router->get('/v1/flashes', [$flashes, 'index']);
     $router->get('/v1/flashes/{id}', [$flashes, 'show']);
-    $router->post('/v1/flashes', [$flashes, 'create'], true, true);
-    $router->post('/v1/flashes/{id}/observations', [$flashes, 'observe'], true, true);
+    $router->post('/v1/flashes', [$flashes, 'create'], true);
+    $router->post('/v1/flashes/{id}/observations', [$flashes, 'observe'], true);
 
     $router->get('/v1/me', [$profile, 'me'], true);
     $router->patch('/v1/me', [$profile, 'update'], true);
