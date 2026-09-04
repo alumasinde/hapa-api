@@ -2,22 +2,18 @@
 
 Backend API and administration system for Hapa.
 
-## Responsibilities
+## Status
 
-- PHP API v1
-- Authentication and authorization
-- User, OTP, PIN, and session management
-- Location-based Flash discovery
-- Categories, modes, observations, sources, and moderation
-- Media metadata for multi-photo Flash feeds
-- Administration and audit logging
-- MariaDB-compatible spatial queries
-- Community Flash reporting and safety controls
-- Flash intelligence, lifecycle automation, trust signals, and abuse primitives
+Phase 7 closes the Hapa API MVP backend:
 
-## Repository boundary
+- Feature complete
+- Regression tested with Bruno
+- Hardened through Phase 6
+- Documented with OpenAPI and deployment guides
+- Production verification gates included
+- API v1 contract frozen for client integration
 
-This repository contains backend code only. The Flutter application lives in `alumasinde/hapa-app`.
+The Flutter/mobile application should now be developed against this API contract.
 
 ## Local server
 
@@ -25,9 +21,9 @@ This repository contains backend code only. The Flutter application lives in `al
 php -S 127.0.0.1:8000 -t public
 ```
 
-## Phase 6 verification
+## Verification
 
-Run these checks before treating a deployment as verified:
+Development verification:
 
 ```powershell
 composer install
@@ -37,6 +33,22 @@ php bin/migrate.php --status
 php bin/worker.php --once
 ```
 
-The verification gate checks required environment values, Phase 6 runtime files, database connectivity, and required Phase 6 tables. PHPStan is configured in `phpstan.neon` and its cache is ignored from version control.
+Production verification:
 
-For HTTP regression testing, run the Bruno collection in `tests/bruno` against the local environment after the database verification passes.
+```powershell
+composer install --no-dev --optimize-autoloader
+php bin/verify-production.php
+php bin/migrate.php --status
+```
+
+See:
+
+- `docs/phase-7.md`
+- `docs/deployment.md`
+- `docs/client-integration.md`
+- `docs/openapi.yaml`
+- `tests/bruno/README.md`
+
+## Repository boundary
+
+This repository contains backend code only. The mobile client belongs in its own repository/project and communicates with the frozen `/v1` API.
