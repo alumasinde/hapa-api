@@ -14,5 +14,21 @@ auth:bearer {
 }
 
 tests {
-  test("users are listed", function() { expect(res.status).to.equal(200); expect(res.body.users).to.be.an("array"); });
+  test("users are listed", function() {
+    expect(res.status).to.equal(200);
+    expect(res.body.users).to.be.an("array");
+  });
+
+  const reporter = Array.isArray(res.body.users)
+    ? res.body.users.find((user) => user.email === "hapa.reporter@example.com")
+    : null;
+
+  test("reporter test user is available for moderation", function() {
+    expect(reporter).to.exist;
+    expect(reporter.id).to.exist;
+  });
+
+  if (reporter && reporter.id) {
+    bru.setEnvVar("targetUserId", String(reporter.id));
+  }
 }
