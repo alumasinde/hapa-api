@@ -1,0 +1,25 @@
+meta {
+  name: Confirm Still Happening
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/flashes/{{flashId}}/observations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "observation": "still_happening"
+  }
+}
+
+tests {
+  test("observation returns 200", function() { expect(res.status).to.equal(200); });
+}
