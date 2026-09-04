@@ -9,6 +9,12 @@ use App\Support\Date;
 
 final class FlashRepository
 {
+    private FlashMediaRepository $media;
+
+    public function __construct()
+    {
+        $this->media = new FlashMediaRepository();
+    }
     public function create(int $userId, int $categoryId, int $sourceTypeId, string $description, float $lat, float $lng, ?string $areaName, int $expiresAfterMinutes): array
     {
         $pdo = Connection::get();
@@ -143,6 +149,7 @@ final class FlashRepository
             'dispute_count' => (int) $row['dispute_count'],
             'created_at' => $row['created_at'],
             'expires_at' => $row['expires_at'],
+            'media' => $this->media->forFlash((int) $row['id']),
         ];
     }
 }
