@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\RequestContext;
 use App\Repository\CategoryRepository;
 use App\Repository\FlashRepository;
+use App\Repository\FlashEngagementRepository;
 use App\Repository\ObservationTypeRepository;
 use App\Repository\SourceTypeRepository;
 use App\Security\RateLimiter;
@@ -17,6 +18,7 @@ final class FlashController
 {
     public function __construct(
         private readonly FlashRepository $flashes = new FlashRepository(),
+        private readonly FlashEngagementRepository $engagement = new FlashEngagementRepository(),
         private readonly CategoryRepository $categories = new CategoryRepository(),
         private readonly SourceTypeRepository $sources = new SourceTypeRepository(),
         private readonly ObservationTypeRepository $observations = new ObservationTypeRepository(),
@@ -41,8 +43,12 @@ final class FlashController
 
     public function show(string $id): never
     {
-        $flash=$this->flashes->find($this->positiveId($id),null);
+        $flashId=$this->positiveId($id);
+        $flash=$this->flashes->find($flashId,null);
         if(!$flash) Response::error('NOT_FOUND','Flash not found',404);
+        $viewerKey=hash('sha256',Request::ip().'|'.(Request::header('User-Agent') ?? ''));
+        $this->engagement->recordView($flashId,$viewerKey);
+        $flash['engagement']=$this->engagement->stats($flashId);
         Response::json($flash);
     }
 
