@@ -1,0 +1,26 @@
+meta {
+  name: Report Flash
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/flashes/{{flashId}}/reports
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reporterToken}}
+}
+
+body:json {
+  {
+    "reason": "misleading",
+    "description": "Automated Phase 4 report test"
+  }
+}
+
+tests {
+  test("report is created", function() { expect(res.status).to.equal(201); expect(res.body.status).to.equal("open"); });
+}
