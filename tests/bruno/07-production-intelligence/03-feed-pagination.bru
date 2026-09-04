@@ -1,0 +1,20 @@
+meta {
+  name: Feed Pagination
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/flashes?lat=-1.286389&lng=36.817223&radius=5&limit=2
+  body: none
+  auth: none
+}
+
+tests {
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+  test("feed has pagination metadata", function () {
+    expect(res.status).to.equal(200);
+    expect(body).to.have.property("flashes");
+    expect(body).to.have.property("next_cursor");
+  });
+}

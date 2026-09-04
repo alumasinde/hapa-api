@@ -1,0 +1,20 @@
+meta {
+  name: Flash Confidence
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/flashes/{{createdFlashId}}
+  body: none
+  auth: none
+}
+
+tests {
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+  test("flash includes intelligence", function () {
+    expect(res.status).to.equal(200);
+    expect(body.intelligence).to.have.property("confidence_score");
+    expect(body.intelligence).to.have.property("state");
+  });
+}

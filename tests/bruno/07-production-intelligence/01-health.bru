@@ -1,0 +1,17 @@
+meta {
+  name: Production Health
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+tests {
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+  test("health returns OK", function () { expect(res.status).to.equal(200); });
+  test("database check is up", function () { expect(body.checks.database).to.equal("up"); });
+}
