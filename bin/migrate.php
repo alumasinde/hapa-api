@@ -85,6 +85,7 @@ if ($mode === '--status') {
     }
 
     printf("\n%d pending migration(s).\n", count($pending));
+    printf("%d applied migration(s).\n", count($applied));
     exit(0);
 }
 
@@ -94,6 +95,9 @@ if ($pending === []) {
 }
 
 echo "\nApplying pending migrations...\n";
+
+$databaseVersion = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
+printf("Database server: %s\n\n", $databaseVersion);
 
 foreach ($pending as $name => $file) {
     $sql = trim((string) file_get_contents($file));
