@@ -11,7 +11,9 @@ Backend API and administration system for Hapa.
 - Categories, modes, observations, sources, and moderation
 - Media metadata for multi-photo Flash feeds
 - Administration and audit logging
-- MySQL 8 spatial queries
+- MariaDB-compatible spatial queries
+- Multi-photo Flash media
+- Community Flash reporting and safety controls
 
 ## Repository boundary
 
