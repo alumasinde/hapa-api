@@ -28,27 +28,45 @@ final class Router
 
     public function dispatch(string $method, string $path): bool
     {
-        $route = $this->routes[$method][$path] ?? null;
+        foreach ($this->routes[$method] ?? [] as $route) {
+            if (!preg_match($route['pattern'], $path, $matches)) {
+                continue;
+            }
 
-        if (!$route) {
-            return false;
+            $arguments = [];
+            foreach ($route['parameters'] as $parameter) {
+                $arguments[] = $matches[$parameter] ?? null;
+            }
+
+            $run = static fn (): mixed => ($route['handler'])(...$arguments);
+
+            if ($route['authenticated']) {
+                $handler = $run;
+                $run = static fn (): mixed => (new AuthMiddleware())->handle($handler);
+            }
+
+            (new RequestIdMiddleware())->handle($run);
+
+            return true;
         }
 
-        $run = $route['handler'];
-
-        if ($route['authenticated']) {
-            $authenticated = $run;
-            $run = static fn (): mixed => (new AuthMiddleware())->handle($authenticated);
-        }
-
-        return (new RequestIdMiddleware())->handle($run) === null || true;
+        return false;
     }
 
     private function add(string $method, string $path, callable $handler, bool $authenticated): self
     {
-        $this->routes[$method][$path] = [
+        $parameters = [];
+        $pattern = preg_replace_callback('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', static function (array $matches) use (&$parameters): string {
+            $parameters[] = $matches[1];
+
+            return '(?P<' . $matches[1] . '>[^/]+)';
+        }, $path);
+
+        $this->routes[$method][] = [
             'handler' => $handler,
             'authenticated' => $authenticated,
+            'parameters' => $parameters,
+            'pattern' => '#^' . $pattern . '$#',
         ];
 
         return $this;
