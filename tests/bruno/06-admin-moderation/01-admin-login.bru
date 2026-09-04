@@ -18,19 +18,22 @@ body:json {
 }
 
 tests {
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+
   test("admin login succeeds", function() {
     expect(res.status).to.equal(200);
   });
 
   test("admin login returns token", function() {
-    expect(res.body.token).to.be.a("string").and.not.empty;
+    expect(body).to.have.property("token");
+    expect(body.token).to.be.a("string").and.not.empty;
   });
 
-  if (res.status === 200 && typeof res.body.token === "string" && res.body.token.length > 0) {
-    bru.setEnvVar("adminToken", res.body.token);
+  if (res.status === 200 && typeof body?.token === "string" && body.token.length > 0) {
+    bru.setEnvVar("adminToken", body.token);
   }
 
-  if (res.status === 200 && typeof res.body.session_id === "number") {
-    bru.setEnvVar("adminSessionId", String(res.body.session_id));
+  if (res.status === 200 && body?.session_id !== undefined && body?.session_id !== null) {
+    bru.setEnvVar("adminSessionId", String(body.session_id));
   }
 }
