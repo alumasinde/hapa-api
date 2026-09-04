@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Hapa API
   version: 1.0.0
-  description: Production API for location-based community incident awareness.
+  description: Production API for location-based community incident awareness. API v1 includes the small engagement extension for views, helpful reactions and share events.
 servers:
   - url: http://127.0.0.1:8000/v1
 paths:
@@ -44,6 +44,20 @@ paths:
       summary: Create flash
       security: [{bearerAuth: []}]
       responses: {'201': {description: Created}}
+  /flashes/{id}/helpful:
+    post:
+      summary: Mark a flash as helpful
+      security: [{bearerAuth: []}]
+      responses: {'200': {description: Engagement updated}}
+    delete:
+      summary: Remove the current user's helpful reaction
+      security: [{bearerAuth: []}]
+      responses: {'200': {description: Engagement updated}}
+  /flashes/{id}/share:
+    post:
+      summary: Record a share action before the client opens its native share sheet
+      security: [{bearerAuth: []}]
+      responses: {'200': {description: Engagement updated}}
   /flashes/{id}/observations:
     post:
       summary: Confirm or clear a flash
