@@ -18,41 +18,22 @@ body:json {
 }
 
 tests {
-  let body = res.body;
-
-  if (typeof body === "string") {
-    const first = body.indexOf("{");
-    const last = body.lastIndexOf("}");
-
-    if (first >= 0 && last >= first) {
-      body = JSON.parse(body.slice(first, last + 1));
-    }
-  }
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
 
   test("admin login succeeds", function() {
     expect(res.status).to.equal(200);
   });
 
   test("admin login returns token", function() {
-    expect(body).to.be.an("object");
+    expect(body).to.have.property("token");
     expect(body.token).to.be.a("string").and.not.empty;
   });
 
-  if (
-    res.status === 200 &&
-    body &&
-    typeof body.token === "string" &&
-    body.token.length > 0
-  ) {
+  if (res.status === 200 && typeof body?.token === "string" && body.token.length > 0) {
     bru.setEnvVar("adminToken", body.token);
   }
 
-  if (
-    res.status === 200 &&
-    body &&
-    body.session_id !== undefined &&
-    body.session_id !== null
-  ) {
+  if (res.status === 200 && body?.session_id !== undefined && body.session_id !== null) {
     bru.setEnvVar("adminSessionId", String(body.session_id));
   }
 }
