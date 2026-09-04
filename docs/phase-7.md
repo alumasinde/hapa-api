@@ -70,3 +70,17 @@ The mobile client should:
 5. Avoid embedding API secrets in the mobile application.
 
 Phase 7 marks the Hapa API MVP as feature complete. Future backend work should be bug fixes, security patches, operational improvements, or versioned product changes.
+
+
+## Engagement extension
+
+The frozen v1 contract includes the small Hapa engagement extension:
+
+- Flash detail reads expose `engagement.views`, `engagement.shares` and `engagement.helpful`.
+- `POST /v1/flashes/{id}/helpful` marks one Flash helpful for the authenticated user.
+- `DELETE /v1/flashes/{id}/helpful` removes that user's reaction.
+- `POST /v1/flashes/{id}/share` records a share intent before the mobile client opens its native share sheet.
+
+Views are privacy-preserving, deduplicated daily per hashed viewer fingerprint. The API stores engagement events only; platform-specific sharing remains the mobile client's responsibility.
+
+Comments are intentionally outside the v1 MVP contract.
