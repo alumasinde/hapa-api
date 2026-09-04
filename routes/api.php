@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Controllers\AuthController;
 use App\Controllers\CategoryController;
 use App\Controllers\FlashController;
+use App\Controllers\FlashMediaController;
+use App\Controllers\FlashReportController;
 use App\Controllers\ModeController;
 use App\Controllers\OtpController;
 use App\Controllers\ProfileController;
