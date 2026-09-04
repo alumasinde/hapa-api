@@ -46,4 +46,12 @@ final class SessionRepository
             'revoked_at' => Date::now()->format('Y-m-d H:i:s'),
         ]);
     }
+
+    public function revokeAllForUser(int $userId): void
+    {
+        Connection::get()->prepare('UPDATE user_sessions SET revoked_at = :revoked_at WHERE user_id = :user_id AND revoked_at IS NULL')->execute([
+            'user_id' => $userId,
+            'revoked_at' => Date::now()->format('Y-m-d H:i:s'),
+        ]);
+    }
 }
