@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Middleware\AuthMiddleware;
+use App\Middleware\IdempotencyMiddleware;
 use App\Middleware\RequestIdMiddleware;
 
 final class Router
@@ -16,14 +17,14 @@ final class Router
         return $this->add('GET', $path, $handler, $authenticated);
     }
 
-    public function post(string $path, callable $handler, bool $authenticated = false): self
+    public function post(string $path, callable $handler, bool $authenticated = false, bool $idempotent = false): self
     {
-        return $this->add('POST', $path, $handler, $authenticated);
+        return $this->add('POST', $path, $handler, $authenticated, $idempotent);
     }
 
-    public function patch(string $path, callable $handler, bool $authenticated = false): self
+    public function patch(string $path, callable $handler, bool $authenticated = false, bool $idempotent = false): self
     {
-        return $this->add('PATCH', $path, $handler, $authenticated);
+        return $this->add('PATCH', $path, $handler, $authenticated, $idempotent);
     }
 
     public function dispatch(string $method, string $path): bool
@@ -45,6 +46,12 @@ final class Router
                 $run = static fn (): mixed => (new AuthMiddleware())->handle($handler);
             }
 
+            if ($route['idempotent']) {
+                $handler = $run;
+                $routeKey = $method . ':' . $route['path'];
+                $run = static fn (): mixed => (new IdempotencyMiddleware())->handle($routeKey, $handler);
+            }
+
             (new RequestIdMiddleware())->handle($run);
 
             return true;
@@ -53,7 +60,7 @@ final class Router
         return false;
     }
 
-    private function add(string $method, string $path, callable $handler, bool $authenticated): self
+    private function add(string $method, string $path, callable $handler, bool $authenticated, bool $idempotent = false): self
     {
         $parameters = [];
         $offset = 0;
@@ -74,7 +81,9 @@ final class Router
         $this->routes[$method][] = [
             'handler' => $handler,
             'authenticated' => $authenticated,
+            'idempotent' => $idempotent,
             'parameters' => $parameters,
+            'path' => $path,
             'pattern' => '#^' . $pattern . '$#',
         ];
 
