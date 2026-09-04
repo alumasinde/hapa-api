@@ -41,15 +41,15 @@ final class Router
 
             $run = static fn (): mixed => ($route['handler'])(...$arguments);
 
-            if ($route['authenticated']) {
-                $handler = $run;
-                $run = static fn (): mixed => (new AuthMiddleware())->handle($handler);
-            }
-
             if ($route['idempotent']) {
                 $handler = $run;
                 $routeKey = $method . ':' . $route['path'];
                 $run = static fn (): mixed => (new IdempotencyMiddleware())->handle($routeKey, $handler);
+            }
+
+            if ($route['authenticated']) {
+                $handler = $run;
+                $run = static fn (): mixed => (new AuthMiddleware())->handle($handler);
             }
 
             (new RequestIdMiddleware())->handle($run);
