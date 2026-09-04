@@ -9,6 +9,7 @@ use App\Controllers\AdminSettingsController;
 use App\Controllers\AdminUserController;
 use App\Controllers\CategoryController;
 use App\Controllers\FlashController;
+use App\Controllers\FlashEngagementController;
 use App\Controllers\FlashMediaController;
 use App\Controllers\FlashReportController;
 use App\Controllers\ModeController;
@@ -21,7 +22,7 @@ return static function (Router $router): void {
     $auth=new AuthController(); $adminAuth=new AdminAuthController(); $adminModeration=new AdminModerationController();
     $adminUsers=new AdminUserController(); $adminRoles=new AdminRoleController(); $adminSettings=new AdminSettingsController();
     $profile=new ProfileController(); $otp=new OtpController(); $categories=new CategoryController(); $modes=new ModeController();
-    $flashes=new FlashController(); $media=new FlashMediaController(); $reports=new FlashReportController(); $system=new SystemController();
+    $flashes=new FlashController(); $engagement=new FlashEngagementController(); $media=new FlashMediaController(); $reports=new FlashReportController(); $system=new SystemController();
 
     $router->get('/v1/health',[$system,'health']);
     $router->post('/v1/auth/register',[$auth,'register']);
