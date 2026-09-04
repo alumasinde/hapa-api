@@ -34,6 +34,7 @@ return static function (Router $router): void {
 
     $router->post('/v1/auth/register', [$auth, 'register']);
     $router->post('/v1/admin/auth/login', [$adminAuth, 'login']);
+    $router->postAdmin('/v1/admin/auth/logout', [$adminAuth, 'logout'], 'admin.session');
 
     $router->getAdmin('/v1/admin/flashes/reported', [$adminModeration, 'reported'], 'flashes.moderate');
     $router->getAdmin('/v1/admin/flashes/{id}/reports', [$adminModeration, 'reports'], 'flashes.moderate');
