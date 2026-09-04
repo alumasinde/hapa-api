@@ -1,0 +1,22 @@
+meta {
+  name: View Flash Engagement
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/flashes/{{flashId}}
+  auth: none
+}
+
+tests {
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+
+  test("flash engagement is returned", function() {
+    expect(res.status).to.equal(200);
+    expect(body.engagement).to.exist;
+    expect(body.engagement.views).to.be.a("number");
+    expect(body.engagement.shares).to.be.a("number");
+    expect(body.engagement.helpful).to.be.a("number");
+  });
+}
