@@ -29,6 +29,11 @@ final class Router
         return $this->add('PATCH', $path, $handler, $authenticated, $idempotent);
     }
 
+    public function delete(string $path, callable $handler, bool $authenticated = false): self
+    {
+        return $this->add('DELETE', $path, $handler, $authenticated);
+    }
+
     public function getAdmin(string $path, callable $handler, string $permission): self
     {
         return $this->add('GET', $path, $handler, false, false, $permission);
