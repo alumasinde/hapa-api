@@ -3,6 +3,11 @@
 declare(strict_types=1);
 
 use App\Controllers\AuthController;
+use App\Controllers\AdminAuthController;
+use App\Controllers\AdminModerationController;
+use App\Controllers\AdminRoleController;
+use App\Controllers\AdminSettingsController;
+use App\Controllers\AdminUserController;
 use App\Controllers\CategoryController;
 use App\Controllers\FlashController;
 use App\Controllers\FlashMediaController;
