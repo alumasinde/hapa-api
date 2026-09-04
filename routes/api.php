@@ -18,7 +18,9 @@ return static function (Router $router): void {
     $router->post('/v1/auth/logout', [$auth, 'logout']);
     $router->post('/v1/otp/request', [$otp, 'request']);
     $router->post('/v1/otp/verify', [$otp, 'verify']);
-    $router->get('/v1/me', [$profile, 'me']);
-    $router->patch('/v1/me', [$profile, 'update']);
-    $router->post('/v1/me/pin', [$profile, 'setPin']);
+    $router->get('/v1/me', [$profile, 'me'], true);
+    $router->patch('/v1/me', [$profile, 'update'], true);
+    $router->post('/v1/me/pin', [$profile, 'setPin'], true);
+    $router->post('/v1/me/password', [$profile, 'changePassword'], true);
+    $router->post('/v1/me/logout-all', [$profile, 'logoutAll'], true);
 };
