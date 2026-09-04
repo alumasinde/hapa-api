@@ -60,7 +60,7 @@ final class AuthService
         $this->sessions->rotate((int) $session['id'], $this->tokens->hash($next), $ttl);
 
         return [
-            'token' => $this->jwt->issue((int) $user['id']),
+            'token' => $this->jwt->issue((int) $user['id'], (int) $session['id']),
             'refresh_token' => $next,
         ];
     }
@@ -73,7 +73,7 @@ final class AuthService
     private function sessionPayload(array $user, ?string $deviceId, ?string $platform): array
     {
         $refresh = $this->tokens->refreshToken();
-        $this->sessions->create(
+        $sessionId = $this->sessions->create(
             (int) $user['id'],
             $this->tokens->hash($refresh),
             $deviceId,
@@ -83,7 +83,7 @@ final class AuthService
 
         return [
             'user' => $this->publicUser($user),
-            'token' => $this->jwt->issue((int) $user['id']),
+            'token' => $this->jwt->issue((int) $user['id'], $sessionId),
             'refresh_token' => $refresh,
         ];
     }
