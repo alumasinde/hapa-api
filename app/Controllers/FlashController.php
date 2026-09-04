@@ -37,18 +37,19 @@ final class FlashController
         $since=isset($_GET['since'])&&$_GET['since']!==''?(string)$_GET['since']:null;
         $cursor=isset($_GET['cursor'])&&$_GET['cursor']!==''?(string)$_GET['cursor']:null;
         if($since!==null && strtotime($since)===false) Response::error('VALIDATION_ERROR','since must be a valid date/time',422,['since'=>'Enter a valid ISO 8601 date/time']);
-        $result=$this->flashes->feedPage($lat,$lng,$radius,$categories,$since,$limit,$cursor);
+        $viewerId=RequestContext::userId();
+        $result=$this->flashes->feedPage($lat,$lng,$radius,$categories,$since,$limit,$cursor,$viewerId);
         Response::json($result);
     }
 
     public function show(string $id): never
     {
         $flashId=$this->positiveId($id);
-        $flash=$this->flashes->find($flashId,null);
+        $flash=$this->flashes->find($flashId,null,RequestContext::userId());
         if(!$flash) Response::error('NOT_FOUND','Flash not found',404);
         $viewerKey=hash('sha256',Request::ip().'|'.(Request::header('User-Agent') ?? ''));
         $this->engagement->recordView($flashId,$viewerKey);
-        $flash['engagement']=$this->engagement->stats($flashId);
+        $flash['engagement']=$this->engagement->stats($flashId,RequestContext::userId());
         Response::json($flash);
     }
 
@@ -73,7 +74,7 @@ final class FlashController
         if(!$this->limits->allow('flash:create',(string)$userId,5,600)) Response::error('RATE_LIMITED','Too many flash reports',429);
         $flash=$this->flashes->create($userId,(int)$category['id'],(int)$source['id'],$description,$lat,$lng,$areaName?:null,(int)$category['expires_after_minutes']);
         $this->intelligence->evaluate((int)$flash['id']);
-        $flash=$this->flashes->find((int)$flash['id'],null) ?? $flash;
+        $flash=$this->flashes->find((int)$flash['id'],null,$userId) ?? $flash;
         Response::json($flash,201);
     }
 
@@ -85,7 +86,7 @@ final class FlashController
         $key=trim((string)($data['observation']??'')); $note=trim((string)($data['note']??''));
         if($key==='') Response::error('VALIDATION_ERROR','Observation is required',422,['observation'=>'This field is required']);
         if(mb_strlen($note)>300) Response::error('VALIDATION_ERROR','Observation note is too long',422,['note'=>'Maximum length is 300 characters']);
-        $flash=$this->flashes->find($flashId,null);
+        $flash=$this->flashes->find($flashId,null,$userId);
         if(!$flash) Response::error('NOT_FOUND','Flash not found',404);
         if(!$this->flashes->canObserve($flashId)) Response::error('FORBIDDEN','This flash is inactive, expired, or unavailable',403);
         $type=$this->observations->findForCategory($flash['category']['key'],$key);
@@ -94,7 +95,7 @@ final class FlashController
         $this->flashes->observe($flashId,$userId,(int)$type['id'],$note!==''?$note:null);
         $this->lifecycle->evaluate($flashId);
         $this->intelligence->evaluate($flashId);
-        Response::json($this->flashes->find($flashId,null) ?? $flash);
+        Response::json($this->flashes->find($flashId,null,$userId) ?? $flash);
     }
 
     private function positiveId(string $value): int { if(!ctype_digit($value)||(int)$value<1) Response::error('VALIDATION_ERROR','Resource id is invalid',422,['id'=>'Enter a positive integer']); return (int)$value; }
