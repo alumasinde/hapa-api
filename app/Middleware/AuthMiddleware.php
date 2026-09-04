@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Middleware;
 
 use App\Core\RequestContext;
+use App\Repository\SessionRepository;
 use App\Repository\UserRepository;
 use App\Security\JwtService;
 use App\Support\Request;
@@ -15,6 +16,7 @@ final class AuthMiddleware
     public function __construct(
         private readonly JwtService $jwt = new JwtService(),
         private readonly UserRepository $users = new UserRepository(),
+        private readonly SessionRepository $sessions = new SessionRepository(),
     ) {
     }
 
@@ -27,18 +29,22 @@ final class AuthMiddleware
         }
 
         try {
-            $userId = $this->jwt->userId($matches[1]);
+            $claims = $this->jwt->claims($matches[1]);
         } catch (\Throwable) {
             Response::error('UNAUTHORIZED', 'Authentication token is invalid', 401);
         }
 
-        $user = $this->users->find($userId);
+        if ($claims['session_id'] < 1 || !$this->sessions->isActive($claims['session_id'], $claims['user_id'])) {
+            Response::error('UNAUTHORIZED', 'Authentication session is no longer active', 401);
+        }
+
+        $user = $this->users->find($claims['user_id']);
 
         if (!$user || $user['status'] !== 'active') {
             Response::error('UNAUTHORIZED', 'User is unavailable', 401);
         }
 
-        RequestContext::setUserId($userId);
+        RequestContext::setUserId($claims['user_id']);
 
         return $next();
     }
