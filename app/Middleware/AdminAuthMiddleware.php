@@ -20,7 +20,13 @@ final class AdminAuthMiddleware
         }
 
         try {
-            $adminId = (new AdminJwtService())->adminId($matches[1]);
+            $claims = (new AdminJwtService())->claims($matches[1]);
+            $adminId = $claims['admin_id'];
+            $sessions = new AdminSessionRepository();
+            if (!$sessions->active($claims['session_id'], $adminId)) {
+                Response::error('UNAUTHORIZED', 'Admin session is unavailable', 401);
+            }
+            $sessions->touch($claims['session_id']);
             $admin = (new AdminRepository())->find($adminId);
             if (!$admin || $admin['status'] !== 'active') {
                 Response::error('UNAUTHORIZED', 'Admin is unavailable', 401);
