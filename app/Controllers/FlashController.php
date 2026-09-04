@@ -115,8 +115,8 @@ final class FlashController
         if (!$flash) {
             Response::error('NOT_FOUND', 'Flash not found', 404);
         }
-        if (!$this->flashes->canObserve($flashId, $userId)) {
-            Response::error('FORBIDDEN', 'You cannot observe your own, inactive, expired, or unavailable flash', 403);
+        if (!$this->flashes->canObserve($flashId)) {
+            Response::error('FORBIDDEN', 'This flash is inactive, expired, or unavailable', 403);
         }
 
         $type = $this->observations->findForCategory($flash['category']['key'], $key);
