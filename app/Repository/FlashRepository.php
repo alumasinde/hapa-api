@@ -44,7 +44,7 @@ final class FlashRepository
         if($since){$ts=strtotime($since);if($ts===false) throw new \InvalidArgumentException('Invalid since value');$params['since']=gmdate('Y-m-d H:i:s',$ts);$sql.=' AND f.created_at>=:since';}
         $decoded=$this->decodeCursor($cursor);
         $sql.=' GROUP BY f.id';
-        if($decoded){$sql.=' HAVING distance_m>:cursor_distance OR (distance_m=:cursor_distance AND (f.created_at<:cursor_created OR (f.created_at=:cursor_created AND f.id<:cursor_id)))';$params['cursor_distance']=$decoded['d'];$params['cursor_created']=$decoded['c'];$params['cursor_id']=$decoded['i'];}
+        if($decoded){$sql.=' HAVING distance_m>:cursor_distance_after OR (distance_m=:cursor_distance_equal AND (f.created_at<:cursor_created_after OR (f.created_at=:cursor_created_equal AND f.id<:cursor_id)))';$params['cursor_distance_after']=$decoded['d'];$params['cursor_distance_equal']=$decoded['d'];$params['cursor_created_after']=$decoded['c'];$params['cursor_created_equal']=$decoded['c'];$params['cursor_id']=$decoded['i'];}
         $sql.=' ORDER BY distance_m ASC,f.created_at DESC,f.id DESC LIMIT '.($limit+1);
         $s=Connection::get()->prepare($sql);$s->execute($params);$rows=$s->fetchAll();$hasMore=count($rows)>$limit;if($hasMore) array_pop($rows);
         $flashes=array_map($this->map(...),$rows);$next=null;
