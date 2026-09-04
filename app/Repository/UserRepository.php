@@ -27,6 +27,16 @@ final class UserRepository
         return $this->find((int) Connection::get()->lastInsertId());
     }
 
+    public function phoneExists(string $phone, ?int $exceptId = null): bool
+    {
+        return $this->exists('phone', $phone, $exceptId);
+    }
+
+    public function emailExists(string $email, ?int $exceptId = null): bool
+    {
+        return $this->exists('email', $email, $exceptId);
+    }
+
     public function find(int $id): ?array
     {
         $statement = Connection::get()->prepare('SELECT * FROM users WHERE id = :id AND deleted_at IS NULL LIMIT 1');
@@ -58,11 +68,37 @@ final class UserRepository
         return $this->find($id);
     }
 
+    public function updatePassword(int $id, string $passwordHash): void
+    {
+        $this->updateHash($id, 'password_hash', $passwordHash);
+    }
+
     public function updatePin(int $id, string $pinHash): void
     {
-        Connection::get()->prepare('UPDATE users SET pin_hash = :pin_hash, updated_at = :updated_at WHERE id = :id')->execute([
+        $this->updateHash($id, 'pin_hash', $pinHash);
+    }
+
+    private function exists(string $column, string $value, ?int $exceptId): bool
+    {
+        $sql = sprintf('SELECT 1 FROM users WHERE %s = :value AND deleted_at IS NULL', $column);
+        $params = ['value' => $value];
+
+        if ($exceptId !== null) {
+            $sql .= ' AND id != :id';
+            $params['id'] = $exceptId;
+        }
+
+        $statement = Connection::get()->prepare($sql . ' LIMIT 1');
+        $statement->execute($params);
+
+        return (bool) $statement->fetchColumn();
+    }
+
+    private function updateHash(int $id, string $column, string $hash): void
+    {
+        Connection::get()->prepare(sprintf('UPDATE users SET %s = :hash, updated_at = :updated_at WHERE id = :id', $column))->execute([
             'id' => $id,
-            'pin_hash' => $pinHash,
+            'hash' => $hash,
             'updated_at' => Date::now()->format('Y-m-d H:i:s'),
         ]);
     }
