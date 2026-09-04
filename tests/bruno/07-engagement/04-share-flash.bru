@@ -1,0 +1,23 @@
+meta {
+  name: Record Flash Share
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/flashes/{{flashId}}/share
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+
+  test("share engagement is recorded", function() {
+    expect(res.status).to.equal(200);
+    expect(body.engagement.shares).to.be.at.least(1);
+  });
+}
