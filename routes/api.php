@@ -17,6 +17,8 @@ return static function (Router $router): void {
     $categories = new CategoryController();
     $modes = new ModeController();
     $flashes = new FlashController();
+    $media = new FlashMediaController();
+    $reports = new FlashReportController();
 
     $router->post('/v1/auth/register', [$auth, 'register']);
     $router->post('/v1/auth/login', [$auth, 'login']);
@@ -31,6 +33,9 @@ return static function (Router $router): void {
     $router->get('/v1/flashes/{id}', [$flashes, 'show']);
     $router->post('/v1/flashes', [$flashes, 'create'], true);
     $router->post('/v1/flashes/{id}/observations', [$flashes, 'observe'], true);
+    $router->post('/v1/flashes/{id}/media', [$media, 'upload'], true);
+    $router->patch('/v1/flashes/{flash}/media/{media}', [$media, 'remove'], true);
+    $router->post('/v1/flashes/{id}/reports', [$reports, 'create'], true);
 
     $router->get('/v1/me', [$profile, 'me'], true);
     $router->patch('/v1/me', [$profile, 'update'], true);
