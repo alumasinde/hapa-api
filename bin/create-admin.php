@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-Env::load(dirname(__DIR__) . '/.env');
-
 use App\Database\Connection;
 use App\Security\PasswordHasher;
 use App\Support\Date;
 use App\Support\Env;
+
+Env::load(dirname(__DIR__) . '/.env');
 
 [$script, $email, $password, $firstName, $lastName] = array_pad($argv, 5, null);
 
