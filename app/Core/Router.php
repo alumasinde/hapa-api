@@ -56,11 +56,20 @@ final class Router
     private function add(string $method, string $path, callable $handler, bool $authenticated): self
     {
         $parameters = [];
-        $pattern = preg_replace_callback('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', static function (array $matches) use (&$parameters): string {
-            $parameters[] = $matches[1];
+        $offset = 0;
+        $pattern = '';
 
-            return '(?P<' . $matches[1] . '>[^/]+)';
-        }, $path);
+        while (preg_match('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', $path, $match, PREG_OFFSET_CAPTURE, $offset)) {
+            $full = $match[0][0];
+            $position = $match[0][1];
+            $name = $match[1][0];
+            $pattern .= preg_quote(substr($path, $offset, $position - $offset), '#');
+            $pattern .= '(?P<' . $name . '>[^/]+)';
+            $parameters[] = $name;
+            $offset = $position + strlen($full);
+        }
+
+        $pattern .= preg_quote(substr($path, $offset), '#');
 
         $this->routes[$method][] = [
             'handler' => $handler,
