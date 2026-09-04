@@ -1,0 +1,25 @@
+meta {
+  name: Own Flash Report Protection
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/flashes/{{flashId}}/reports
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "reason": "spam"
+  }
+}
+
+tests {
+  test("own flash report is forbidden", function() { expect(res.status).to.equal(403); });
+}
