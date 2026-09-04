@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Security\OtpService;
 use App\Security\RateLimiter;
+use App\Support\Env;
 use App\Support\Request;
 use App\Support\Response;
 
@@ -20,8 +21,8 @@ final class OtpController
     public function request(): never
     {
         $data = Request::json();
-        $destination = (string) ($data['destination'] ?? '');
-        $purpose = (string) ($data['purpose'] ?? '');
+        $destination = trim((string) ($data['destination'] ?? ''));
+        $purpose = trim((string) ($data['purpose'] ?? ''));
 
         if ($destination === '' || $purpose === '') {
             Response::error('VALIDATION_ERROR', 'Destination and purpose are required', 422);
@@ -31,17 +32,22 @@ final class OtpController
             Response::error('RATE_LIMITED', 'Too many OTP requests', 429);
         }
 
-        $this->otps->generate(null, $destination, $purpose);
+        $code = $this->otps->generate(null, $destination, $purpose);
+        $response = ['message' => 'OTP issued'];
 
-        Response::json(['message' => 'OTP issued']);
+        if (Env::get('APP_ENV', 'production') === 'local') {
+            $response['code'] = $code;
+        }
+
+        Response::json($response);
     }
 
     public function verify(): never
     {
         $data = Request::json();
-        $destination = (string) ($data['destination'] ?? '');
-        $purpose = (string) ($data['purpose'] ?? '');
-        $code = (string) ($data['code'] ?? '');
+        $destination = trim((string) ($data['destination'] ?? ''));
+        $purpose = trim((string) ($data['purpose'] ?? ''));
+        $code = trim((string) ($data['code'] ?? ''));
 
         if ($destination === '' || $purpose === '' || !preg_match('/^[0-9]{6}$/', $code)) {
             Response::error('VALIDATION_ERROR', 'OTP details are invalid', 422);
