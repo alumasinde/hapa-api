@@ -23,7 +23,7 @@ final class FlashRepository
             'description' => $description !== '' ? $description : null,
             'lat' => $lat,
             'lng' => $lng,
-            'area_name' => $areaName !== '' ? $areaName : null,
+            'area_name' => $areaName,
             'expires_at' => $expires->format('Y-m-d H:i:s'),
             'created_at' => $now->format('Y-m-d H:i:s'),
             'updated_at' => $now->format('Y-m-d H:i:s'),
@@ -45,6 +45,14 @@ final class FlashRepository
         $statement->execute($params);
 
         return ($row = $statement->fetch()) ? $this->map($row) : null;
+    }
+
+    public function canObserve(int $flashId, int $userId): bool
+    {
+        $statement = Connection::get()->prepare('SELECT 1 FROM flashes WHERE id = :id AND user_id <> :user_id AND moderation_status = \'visible\' AND lifecycle_status = \'active\' AND expires_at > UTC_TIMESTAMP() LIMIT 1');
+        $statement->execute(['id' => $flashId, 'user_id' => $userId]);
+
+        return (bool) $statement->fetchColumn();
     }
 
     public function feed(float $lat, float $lng, float $radiusKm, array $categoryKeys, ?string $since, int $limit): array
@@ -75,8 +83,12 @@ final class FlashRepository
         }
 
         if ($since) {
+            $timestamp = strtotime($since);
+            if ($timestamp === false) {
+                throw new \InvalidArgumentException('Invalid since value');
+            }
             $sql .= ' AND f.created_at >= :since';
-            $params['since'] = gmdate('Y-m-d H:i:s', strtotime($since));
+            $params['since'] = gmdate('Y-m-d H:i:s', $timestamp);
         }
 
         $sql .= ' GROUP BY f.id ORDER BY distance_m ASC, f.created_at DESC LIMIT ' . $limit;
@@ -89,7 +101,7 @@ final class FlashRepository
     public function observe(int $flashId, int $userId, int $observationTypeId, ?string $note): ?array
     {
         $now = Date::now()->format('Y-m-d H:i:s');
-        $statement = Connection::get()->prepare('INSERT INTO flash_observations (flash_id, user_id, observation_type_id, note, created_at, updated_at) VALUES (:flash_id, :user_id, :observation_type_id, :note, :created_at, :updated_at) ON DUPLICATE KEY UPDATE note = VALUES(note), updated_at = VALUES(updated_at)');
+        $statement = Connection::get()->prepare('INSERT INTO flash_observations (flash_id, user_id, observation_type_id, note, created_at, updated_at) VALUES (:flash_id, :user_id, :observation_type_id, :note, :created_at, :updated_at) ON DUPLICATE KEY UPDATE observation_type_id = VALUES(observation_type_id), note = VALUES(note), updated_at = VALUES(updated_at)');
         $statement->execute([
             'flash_id' => $flashId,
             'user_id' => $userId,
@@ -113,10 +125,15 @@ final class FlashRepository
 
     private function map(array $row): array
     {
+        $status = $row['lifecycle_status'];
+        if ($status === 'active' && strtotime($row['expires_at'] . ' UTC') <= time()) {
+            $status = 'expired';
+        }
+
         return [
             'id' => (int) $row['id'],
             'category' => ['key' => $row['category_key'], 'name' => $row['category_name'], 'icon' => $row['category_icon']],
-            'status' => $row['lifecycle_status'],
+            'status' => $status,
             'verification_state' => $row['verification_state'],
             'description' => $row['description'],
             'location' => ['lat' => (float) $row['lat'], 'lng' => (float) $row['lng'], 'area_name' => $row['area_name']],
