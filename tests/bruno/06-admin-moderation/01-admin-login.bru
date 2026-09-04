@@ -7,6 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/admin/auth/login
   body: json
+  auth: none
 }
 
 body:json {
@@ -17,5 +18,19 @@ body:json {
 }
 
 tests {
-  test("admin login succeeds", function() { expect(res.status).to.equal(200); expect(res.body.token).to.be.a("string"); bru.setEnvVar("adminToken", res.body.token); });
+  test("admin login succeeds", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("admin login returns token", function() {
+    expect(res.body.token).to.be.a("string").and.not.empty;
+  });
+
+  if (res.status === 200 && typeof res.body.token === "string" && res.body.token.length > 0) {
+    bru.setEnvVar("adminToken", res.body.token);
+  }
+
+  if (res.status === 200 && typeof res.body.session_id === "number") {
+    bru.setEnvVar("adminSessionId", String(res.body.session_id));
+  }
 }
