@@ -14,6 +14,11 @@ use App\Core\Router;
 
 return static function (Router $router): void {
     $auth = new AuthController();
+    $adminAuth = new AdminAuthController();
+    $adminModeration = new AdminModerationController();
+    $adminUsers = new AdminUserController();
+    $adminRoles = new AdminRoleController();
+    $adminSettings = new AdminSettingsController();
     $profile = new ProfileController();
     $otp = new OtpController();
     $categories = new CategoryController();
@@ -23,6 +28,19 @@ return static function (Router $router): void {
     $reports = new FlashReportController();
 
     $router->post('/v1/auth/register', [$auth, 'register']);
+    $router->post('/v1/admin/auth/login', [$adminAuth, 'login']);
+
+    $router->getAdmin('/v1/admin/flashes/reported', [$adminModeration, 'reported'], 'flashes.moderate');
+    $router->getAdmin('/v1/admin/flashes/{id}/reports', [$adminModeration, 'reports'], 'flashes.moderate');
+    $router->postAdmin('/v1/admin/flashes/{id}/hide', [$adminModeration, 'hide'], 'flashes.moderate');
+    $router->postAdmin('/v1/admin/flashes/{id}/restore', [$adminModeration, 'restore'], 'flashes.moderate');
+    $router->getAdmin('/v1/admin/users', [$adminUsers, 'index'], 'users.read');
+    $router->getAdmin('/v1/admin/users/{id}', [$adminUsers, 'show'], 'users.read');
+    $router->patchAdmin('/v1/admin/users/{id}/status', [$adminUsers, 'status'], 'users.manage');
+    $router->postAdmin('/v1/admin/admin-users/{id}/roles', [$adminRoles, 'assign'], 'roles.manage');
+    $router->patchAdmin('/v1/admin/roles/{role}/permissions', [$adminRoles, 'permissions'], 'roles.manage');
+    $router->getAdmin('/v1/admin/settings', [$adminSettings, 'index'], 'settings.manage');
+    $router->patchAdmin('/v1/admin/settings/{key}', [$adminSettings, 'update'], 'settings.manage');
     $router->post('/v1/auth/login', [$auth, 'login']);
     $router->post('/v1/auth/refresh', [$auth, 'refresh']);
     $router->post('/v1/auth/logout', [$auth, 'logout']);
