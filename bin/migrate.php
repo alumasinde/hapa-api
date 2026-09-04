@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Database\Connection;
 use App\Support\Env;
-use PDO;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
