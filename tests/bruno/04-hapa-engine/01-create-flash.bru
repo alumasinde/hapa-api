@@ -26,5 +26,14 @@ body:json {
 }
 
 tests {
-  test("flash is created", function() { expect(res.status).to.equal(201); expect(res.body.id).to.exist; bru.setVar("flashId", res.body.id); });
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+
+  test("flash is created", function() {
+    expect(res.status).to.equal(201);
+    expect(body.id).to.exist;
+  });
+
+  if (res.status === 201 && body?.id !== undefined && body?.id !== null) {
+    bru.setEnvVar("flashId", String(body.id));
+  }
 }
