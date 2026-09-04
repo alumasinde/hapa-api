@@ -1,0 +1,25 @@
+meta {
+  name: Duplicate Report Protection
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/flashes/{{flashId}}/reports
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reporterToken}}
+}
+
+body:json {
+  {
+    "reason": "misleading"
+  }
+}
+
+tests {
+  test("duplicate report is rejected", function() { expect(res.status).to.equal(409); });
+}
