@@ -1,0 +1,23 @@
+meta {
+  name: Remove Flash Helpful
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/flashes/{{flashId}}/helpful
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+
+  test("helpful reaction is removed", function() {
+    expect(res.status).to.equal(200);
+    expect(body.engagement.marked_helpful).to.equal(false);
+  });
+}
