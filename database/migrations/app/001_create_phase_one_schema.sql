@@ -139,7 +139,7 @@ CREATE TABLE flashes (
     category_id BIGINT UNSIGNED NOT NULL,
     source_type_id BIGINT UNSIGNED NOT NULL,
     description VARCHAR(500) NULL,
-    location POINT SRID 4326 NOT NULL,
+    location POINT NOT NULL,
     area_name VARCHAR(191) NULL,
     lifecycle_status VARCHAR(30) NOT NULL DEFAULT 'active',
     verification_state VARCHAR(40) NOT NULL DEFAULT 'unverified',
