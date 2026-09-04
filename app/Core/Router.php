@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Middleware\AuthMiddleware;
+use App\Middleware\AdminAuthMiddleware;
+use App\Middleware\PermissionMiddleware;
 use App\Middleware\IdempotencyMiddleware;
 use App\Middleware\RequestIdMiddleware;
 
