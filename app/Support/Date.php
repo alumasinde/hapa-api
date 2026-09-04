@@ -15,11 +15,10 @@ final class Date
         return new DateTimeImmutable('now', new DateTimeZone('UTC'));
     }
 
-    public static function iso(DateTimeInterface $date): string
-    {
-        return $date->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM);
-    }
-
+ public static function iso(DateTimeImmutable $date): string
+{
+    return $date->setTimezone(new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM);
+}
     public static function expiresInMinutes(int $minutes): DateTimeImmutable
     {
         return self::now()->modify(sprintf('+%d minutes', $minutes));

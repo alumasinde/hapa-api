@@ -20,3 +20,5 @@ Backend API and administration system for Hapa.
 This repository contains backend code only. The Flutter application lives in `alumasinde/hapa-app`.
 
 php -S 127.0.0.1:8000 -t public
+
+composer stan

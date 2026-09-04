@@ -12,8 +12,21 @@
       "App\\": "app/"
     }
   },
+  
   "config": {
     "sort-packages": true,
-    "optimize-autoloader": true
-  }
+    "optimize-autoloader": true,
+    "audit": {
+      "ignore": {
+        "PKSA-y2cr-5h3j-g3ys": "Accepted and tracked separately."
+      }
+    }
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^2.2"
+  },
+  "scripts": {
+    "stan": "phpstan analyse"
 }
+}
+
