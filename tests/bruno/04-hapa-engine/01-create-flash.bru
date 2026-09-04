@@ -1,0 +1,30 @@
+meta {
+  name: Create Flash
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/flashes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "category": "traffic",
+    "source": "user",
+    "description": "Automated Bruno test flash",
+    "lat": -1.286389,
+    "lng": 36.817223,
+    "area_name": "Nairobi CBD"
+  }
+}
+
+tests {
+  test("flash is created", function() { expect(res.status).to.equal(201); expect(res.body.id).to.exist; bru.setVar("flashId", res.body.id); });
+}
