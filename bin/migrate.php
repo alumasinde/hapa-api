@@ -53,7 +53,14 @@ foreach ($selected as $scope => $directory) {
     }
 }
 
-ksort($migrations, SORT_NATURAL);
+uksort($migrations, static function (string $left, string $right): int {
+    [$leftScope, $leftName] = explode('/', $left, 2);
+    [$rightScope, $rightName] = explode('/', $right, 2);
+
+    $order = strnatcmp($leftName, $rightName);
+
+    return $order !== 0 ? $order : strcmp($leftScope, $rightScope);
+});
 
 $applied = $pdo->query('SELECT migration FROM schema_migrations ORDER BY migration')->fetchAll(PDO::FETCH_COLUMN);
 $applied = array_fill_keys($applied, true);
