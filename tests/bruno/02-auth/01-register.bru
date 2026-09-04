@@ -1,0 +1,26 @@
+meta {
+  name: Register Test User
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "first_name": "Hapa",
+    "last_name": "Tester",
+    "display_name": "Hapa Tester",
+    "email": "{{testEmail}}",
+    "phone": "{{testPhone}}",
+    "password": "{{testPassword}}"
+  }
+}
+
+tests {
+  test("register creates or rejects existing user", function() { expect([201, 422]).to.include(res.status); });
+}
