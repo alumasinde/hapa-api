@@ -1,0 +1,18 @@
+meta {
+  name: View Flash Reports
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/admin/flashes/{{flashId}}/reports
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("flash reports are returned", function() { expect(res.status).to.equal(200); expect(res.body.reports).to.be.an("array"); });
+}
