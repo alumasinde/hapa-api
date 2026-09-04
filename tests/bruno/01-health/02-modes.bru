@@ -1,0 +1,16 @@
+meta {
+  name: Get Modes
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/modes
+  body: none
+  auth: none
+}
+
+tests {
+  test("modes returns 200", function() { expect(res.status).to.equal(200); });
+  test("modes response has modes", function() { expect(res.body.modes).to.be.an("array"); });
+}
