@@ -1,0 +1,26 @@
+meta {
+  name: Create Second Test User
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "first_name": "Hapa",
+    "last_name": "Reporter",
+    "display_name": "Hapa Reporter",
+    "email": "hapa.reporter@example.com",
+    "phone": "+254700000099",
+    "password": "{{testPassword}}"
+  }
+}
+
+tests {
+  test("second user is created or already exists", function() { expect([201, 409, 422]).to.include(res.status); });
+}
