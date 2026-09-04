@@ -11,7 +11,20 @@ get {
 }
 
 tests {
-  test("nearby feed returns 200", function() { expect(res.status).to.equal(200); });
-  test("nearby feed returns flashes", function() { expect(res.body.flashes).to.be.an("array"); });
-  test("created flash appears in nearby feed", function() { const id = Number(bru.getVar("flashId")); expect(res.body.flashes.some(function(flash) { return Number(flash.id) === id; })).to.equal(true); });
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+  const flashId = Number(bru.getEnvVar("flashId"));
+
+  test("nearby feed returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("nearby feed returns flashes", function() {
+    expect(body.flashes).to.be.an("array");
+  });
+
+  test("created flash appears in nearby feed", function() {
+    expect(body.flashes.some(function(flash) {
+      return Number(flash.id) === flashId;
+    })).to.equal(true);
+  });
 }
