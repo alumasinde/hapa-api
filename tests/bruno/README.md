@@ -47,6 +47,7 @@ Run the collection from top to bottom:
 4. Hapa engine
 5. Second user and media/safety
 6. Admin moderation
+7. Engagement
 
 Authentication tokens are written to the Bruno environment by the login requests. This prevents later requests from depending on stale request-scoped variables.
 
