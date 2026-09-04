@@ -51,6 +51,9 @@ return static function (Router $router): void {
     $router->post('/v1/flashes',[$flashes,'create'],true); $router->post('/v1/flashes/{id}/observations',[$flashes,'observe'],true);
     $router->post('/v1/flashes/{id}/media',[$media,'upload'],true); $router->patch('/v1/flashes/{flash}/media/{media}',[$media,'remove'],true);
     $router->post('/v1/flashes/{id}/reports',[$reports,'create'],true);
+    $router->post('/v1/flashes/{id}/helpful',[$engagement,'helpful'],true);
+    $router->delete('/v1/flashes/{id}/helpful',[$engagement,'removeHelpful'],true);
+    $router->post('/v1/flashes/{id}/share',[$engagement,'share'],true);
 
     $router->get('/v1/me',[$profile,'me'],true); $router->patch('/v1/me',[$profile,'update'],true);
     $router->post('/v1/me/pin',[$profile,'setPin'],true); $router->post('/v1/me/password',[$profile,'changePassword'],true);
