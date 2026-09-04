@@ -5,6 +5,4 @@ parameters:
         - bin
         - public
         - routes
-    excludePaths:
-        - vendor
     tmpDir: build/phpstan
