@@ -6,7 +6,6 @@ namespace App\Repository;
 
 use App\Database\Connection;
 use App\Support\Date;
-use PDO;
 
 final class FlashRepository
 {
@@ -35,7 +34,7 @@ final class FlashRepository
 
     public function find(int $id, ?array $origin): ?array
     {
-        $sql = $this->selectSql($origin) . ' WHERE f.id = :id AND f.moderation_status = \'visible\' LIMIT 1';
+        $sql = $this->selectSql($origin) . ' WHERE f.id = :id AND f.moderation_status = \'visible\' GROUP BY f.id LIMIT 1';
         $statement = Connection::get()->prepare($sql);
         $params = ['id' => $id];
         if ($origin) {
@@ -64,10 +63,10 @@ final class FlashRepository
 
         if ($since) {
             $sql .= ' AND f.created_at >= :since';
-            $params['since'] = $since;
+            $params['since'] = gmdate('Y-m-d H:i:s', strtotime($since));
         }
 
-        $sql .= ' ORDER BY distance_m ASC, f.created_at DESC LIMIT ' . $limit;
+        $sql .= ' GROUP BY f.id ORDER BY distance_m ASC, f.created_at DESC LIMIT ' . $limit;
         $statement = Connection::get()->prepare($sql);
         $statement->execute($params);
 
@@ -76,9 +75,8 @@ final class FlashRepository
 
     public function observe(int $flashId, int $userId, int $observationTypeId, ?string $note): ?array
     {
-        $pdo = Connection::get();
         $now = Date::now()->format('Y-m-d H:i:s');
-        $statement = $pdo->prepare('INSERT INTO flash_observations (flash_id, user_id, observation_type_id, note, created_at, updated_at) VALUES (:flash_id, :user_id, :observation_type_id, :note, :created_at, :updated_at) ON DUPLICATE KEY UPDATE note = VALUES(note), updated_at = VALUES(updated_at)');
+        $statement = Connection::get()->prepare('INSERT INTO flash_observations (flash_id, user_id, observation_type_id, note, created_at, updated_at) VALUES (:flash_id, :user_id, :observation_type_id, :note, :created_at, :updated_at) ON DUPLICATE KEY UPDATE note = VALUES(note), updated_at = VALUES(updated_at)');
         $statement->execute([
             'flash_id' => $flashId,
             'user_id' => $userId,
@@ -95,7 +93,7 @@ final class FlashRepository
     {
         $distance = $origin ? ', ST_Distance_Sphere(f.location, POINT(:lng, :lat)) AS distance_m' : ', NULL AS distance_m';
 
-        return 'SELECT f.id, f.user_id, f.description, f.area_name, f.lifecycle_status, f.verification_state, f.moderation_status, f.expires_at, f.resolved_at, f.created_at, f.updated_at, ST_Y(f.location) AS lat, ST_X(f.location) AS lng' . $distance . ', c.category_key, c.name AS category_name, c.icon AS category_icon, u.display_name FROM flashes f JOIN categories c ON c.id = f.category_id JOIN users u ON u.id = f.user_id';
+        return 'SELECT f.id, f.user_id, f.description, f.area_name, f.lifecycle_status, f.verification_state, f.moderation_status, f.expires_at, f.resolved_at, f.created_at, f.updated_at, ST_Y(f.location) AS lat, ST_X(f.location) AS lng' . $distance . ', c.category_key, c.name AS category_name, c.icon AS category_icon, u.display_name, COALESCE(SUM(ot.observation_key = \'still_happening\'), 0) AS confirm_count, COALESCE(SUM(ot.observation_key = \'cleared\'), 0) AS dispute_count FROM flashes f JOIN categories c ON c.id = f.category_id JOIN users u ON u.id = f.user_id LEFT JOIN flash_observations fo ON fo.flash_id = f.id LEFT JOIN observation_types ot ON ot.id = fo.observation_type_id';
     }
 
     private function map(array $row): array
@@ -109,6 +107,8 @@ final class FlashRepository
             'location' => ['lat' => (float) $row['lat'], 'lng' => (float) $row['lng'], 'area_name' => $row['area_name']],
             'distance_km' => $row['distance_m'] === null ? null : round(((float) $row['distance_m']) / 1000, 2),
             'reporter' => ['id' => (int) $row['user_id'], 'display_name' => $row['display_name']],
+            'confirm_count' => (int) $row['confirm_count'],
+            'dispute_count' => (int) $row['dispute_count'],
             'created_at' => $row['created_at'],
             'expires_at' => $row['expires_at'],
         ];
