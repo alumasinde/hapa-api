@@ -17,6 +17,8 @@ final class OtpService
     public function generate(?int $userId, string $destination, string $purpose): string
     {
         $code = (string) random_int(100000, 999999);
+
+        $this->otps->invalidateActive($destination, $purpose);
         $this->otps->create($userId, $destination, $purpose, $this->hasher->hash($code), 600);
 
         return $code;
