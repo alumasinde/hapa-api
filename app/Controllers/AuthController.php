@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Repository\UserRepository;
 use App\Security\RateLimiter;
 use App\Services\AuthService;
 use App\Support\Request;
@@ -15,6 +16,7 @@ final class AuthController
     public function __construct(
         private readonly AuthService $auth = new AuthService(),
         private readonly RateLimiter $limits = new RateLimiter(),
+        private readonly UserRepository $users = new UserRepository(),
     ) {
     }
 
@@ -34,11 +36,30 @@ final class AuthController
             Response::error('VALIDATION_ERROR', 'Phone or email is required', 422, ['phone' => 'Phone or email is required']);
         }
 
+        $errors = [];
+        if (!empty($data['phone']) && $this->users->phoneExists((string) $data['phone'])) {
+            $errors['phone'] = 'This phone number is already registered';
+        }
+        if (!empty($data['email']) && $this->users->emailExists((string) $data['email'])) {
+            $errors['email'] = 'This email address is already registered';
+        }
+        if ($errors !== []) {
+            Response::error('VALIDATION_ERROR', 'Registration details are unavailable', 422, $errors);
+        }
+
         if (!$this->limits->allow('register', Request::ip(), 10, 3600)) {
             Response::error('RATE_LIMITED', 'Too many registration attempts', 429);
         }
 
-        Response::json($this->auth->register($data), 201);
+        try {
+            Response::json($this->auth->register($data), 201);
+        } catch (\PDOException $exception) {
+            if ($exception->getCode() === '23000') {
+                Response::error('VALIDATION_ERROR', 'Phone or email is already registered', 422);
+            }
+
+            throw $exception;
+        }
     }
 
     public function login(): never
