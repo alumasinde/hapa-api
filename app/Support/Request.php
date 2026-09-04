@@ -19,6 +19,11 @@ final class Request
         return is_array($data) ? $data : [];
     }
 
+    public static function query(string $key): ?string
+    {
+        return isset($_GET[$key]) ? (string) $_GET[$key] : null;
+    }
+
     public static function header(string $name): ?string
     {
         $key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
