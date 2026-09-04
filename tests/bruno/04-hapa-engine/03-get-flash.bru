@@ -11,6 +11,13 @@ get {
 }
 
 tests {
-  test("flash detail returns 200", function() { expect(res.status).to.equal(200); });
-  test("flash id matches", function() { expect(Number(res.body.id)).to.equal(Number(bru.getVar("flashId"))); });
+  const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
+
+  test("flash detail returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("flash id matches", function() {
+    expect(Number(body.id)).to.equal(Number(bru.getEnvVar("flashId")));
+  });
 }
