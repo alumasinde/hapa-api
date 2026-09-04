@@ -47,10 +47,10 @@ final class FlashRepository
         return ($row = $statement->fetch()) ? $this->map($row) : null;
     }
 
-    public function canObserve(int $flashId, int $userId): bool
+    public function canObserve(int $flashId): bool
     {
-        $statement = Connection::get()->prepare('SELECT 1 FROM flashes WHERE id = :id AND user_id <> :user_id AND moderation_status = \'visible\' AND lifecycle_status = \'active\' AND expires_at > UTC_TIMESTAMP() LIMIT 1');
-        $statement->execute(['id' => $flashId, 'user_id' => $userId]);
+        $statement = Connection::get()->prepare('SELECT 1 FROM flashes WHERE id = :id AND moderation_status = \'visible\' AND lifecycle_status = \'active\' AND expires_at > UTC_TIMESTAMP() LIMIT 1');
+        $statement->execute(['id' => $flashId]);
 
         return (bool) $statement->fetchColumn();
     }
