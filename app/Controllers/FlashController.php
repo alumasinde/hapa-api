@@ -43,10 +43,12 @@ final class FlashController
 
     public function show(string $id): never
     {
-        $flash = $this->flashes->find((int) $id, null);
+        $flashId = $this->positiveId($id);
+        $flash = $this->flashes->find($flashId, null);
         if (!$flash) {
             Response::error('NOT_FOUND', 'Flash not found', 404);
         }
+
         Response::json($flash);
     }
 
@@ -93,32 +95,53 @@ final class FlashController
     public function observe(string $id): never
     {
         $userId = RequestContext::userId();
+        if (!$userId) {
+            Response::error('UNAUTHORIZED', 'Authentication token is required', 401);
+        }
+
+        $flashId = $this->positiveId($id);
         $data = Request::json();
         $key = trim((string) ($data['observation'] ?? ''));
         $note = trim((string) ($data['note'] ?? ''));
 
-        $flash = $this->flashes->find((int) $id, null);
-        if (!$flash) {
-            Response::error('NOT_FOUND', 'Flash not found', 404);
-        }
-        if (!$userId || $key === '') {
+        if ($key === '') {
             Response::error('VALIDATION_ERROR', 'Observation is required', 422, ['observation' => 'This field is required']);
         }
         if (mb_strlen($note) > 300) {
             Response::error('VALIDATION_ERROR', 'Observation note is too long', 422, ['note' => 'Maximum length is 300 characters']);
         }
 
+        $flash = $this->flashes->find($flashId, null);
+        if (!$flash) {
+            Response::error('NOT_FOUND', 'Flash not found', 404);
+        }
+        if (!$this->flashes->canObserve($flashId, $userId)) {
+            Response::error('FORBIDDEN', 'You cannot observe your own, inactive, expired, or unavailable flash', 403);
+        }
+
         $type = $this->observations->findForCategory($flash['category']['key'], $key);
         if (!$type) {
             Response::error('VALIDATION_ERROR', 'Observation is unavailable for this category', 422, ['observation' => 'This observation is unavailable']);
         }
+        if (!$this->limits->allow('flash:observe', (string) $userId, 20, 600)) {
+            Response::error('RATE_LIMITED', 'Too many observations', 429);
+        }
 
-        Response::json($this->flashes->observe((int) $id, $userId, (int) $type['id'], $note !== '' ? $note : null));
+        Response::json($this->flashes->observe($flashId, $userId, (int) $type['id'], $note !== '' ? $note : null));
+    }
+
+    private function positiveId(string $value): int
+    {
+        if (!ctype_digit($value) || (int) $value < 1) {
+            Response::error('VALIDATION_ERROR', 'Resource id is invalid', 422, ['id' => 'Enter a positive integer']);
+        }
+
+        return (int) $value;
     }
 
     private function number(mixed $value, string $field, float $min, float $max): float
     {
-        if (!is_numeric($value) || (float) $value < $min || (float) $value > $max) {
+        if (!is_numeric($value) || !is_finite((float) $value) || (float) $value < $min || (float) $value > $max) {
             Response::error('VALIDATION_ERROR', $field . ' is invalid', 422, [$field => 'Enter a valid value']);
         }
 
