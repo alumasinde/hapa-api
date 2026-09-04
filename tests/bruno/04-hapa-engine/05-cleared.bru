@@ -1,0 +1,25 @@
+meta {
+  name: Confirm Cleared
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/flashes/{{flashId}}/observations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "observation": "cleared"
+  }
+}
+
+tests {
+  test("cleared observation returns 200", function() { expect(res.status).to.equal(200); });
+}
