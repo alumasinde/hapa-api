@@ -47,8 +47,8 @@ final class UserRepository
 
     public function findByLogin(string $login): ?array
     {
-        $statement = Connection::get()->prepare('SELECT * FROM users WHERE deleted_at IS NULL AND (email = :login OR phone = :login) LIMIT 1');
-        $statement->execute(['login' => $login]);
+        $statement = Connection::get()->prepare('SELECT * FROM users WHERE deleted_at IS NULL AND (email = :email_login OR phone = :phone_login) LIMIT 1');
+        $statement->execute(['email_login' => $login, 'phone_login' => $login]);
 
         return $statement->fetch() ?: null;
     }
