@@ -1,0 +1,22 @@
+meta {
+  name: Login Second Test User
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "login": "hapa.reporter@example.com",
+    "password": "{{testPassword}}"
+  }
+}
+
+tests {
+  test("second login returns 200", function() { expect(res.status).to.equal(200); bru.setVar("reporterToken", res.body.token); });
+}
