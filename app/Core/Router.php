@@ -10,15 +10,36 @@ final class Router
 
     public function get(string $path, callable $handler): self
     {
-        $this->routes['GET'][$path] = $handler;
-
-        return $this;
+        return $this->add('GET', $path, $handler);
     }
 
-    public function dispatch(string $method, string $path): mixed
+    public function post(string $path, callable $handler): self
+    {
+        return $this->add('POST', $path, $handler);
+    }
+
+    public function patch(string $path, callable $handler): self
+    {
+        return $this->add('PATCH', $path, $handler);
+    }
+
+    public function dispatch(string $method, string $path): bool
     {
         $handler = $this->routes[$method][$path] ?? null;
 
-        return $handler ? $handler() : null;
+        if (!$handler) {
+            return false;
+        }
+
+        $handler();
+
+        return true;
+    }
+
+    private function add(string $method, string $path, callable $handler): self
+    {
+        $this->routes[$method][$path] = $handler;
+
+        return $this;
     }
 }
