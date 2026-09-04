@@ -19,11 +19,11 @@ final class FlashRepository
         return $this->find((int)$pdo->lastInsertId(),null) ?? throw new \RuntimeException('Flash was not created');
     }
 
-    public function find(int $id,?array $origin): ?array
+    public function find(int $id,?array $origin,?int $viewerId=null): ?array
     {
         $sql=$this->selectSql($origin)." WHERE f.id=:id AND f.moderation_status='visible' GROUP BY f.id LIMIT 1";
         $s=Connection::get()->prepare($sql); $params=['id'=>$id]; if($origin) $params+=$origin; $s->execute($params);
-        return ($row=$s->fetch())?$this->map($row):null;
+        return ($row=$s->fetch())?$this->map($row,$viewerId):null;
     }
 
     public function canObserve(int $flashId): bool
@@ -32,9 +32,9 @@ final class FlashRepository
         $s->execute(['id'=>$flashId]); return (bool)$s->fetchColumn();
     }
 
-    public function feed(float $lat,float $lng,float $radiusKm,array $categoryKeys,?string $since,int $limit): array { return $this->feedPage($lat,$lng,$radiusKm,$categoryKeys,$since,$limit,null)['flashes']; }
+    public function feed(float $lat,float $lng,float $radiusKm,array $categoryKeys,?string $since,int $limit,?int $viewerId=null): array { return $this->feedPage($lat,$lng,$radiusKm,$categoryKeys,$since,$limit,null,$viewerId)['flashes']; }
 
-    public function feedPage(float $lat,float $lng,float $radiusKm,array $categoryKeys,?string $since,int $limit,?string $cursor): array
+    public function feedPage(float $lat,float $lng,float $radiusKm,array $categoryKeys,?string $since,int $limit,?string $cursor,?int $viewerId=null): array
     {
         $origin=['origin_lat'=>$lat,'origin_lng'=>$lng];
         $params=[...$origin,'filter_lat'=>$lat,'filter_lng'=>$lng,'radius_m'=>$radiusKm*1000];
@@ -46,7 +46,7 @@ final class FlashRepository
         if($decoded){$sql.=' HAVING distance_m>:cursor_distance_after OR (distance_m=:cursor_distance_equal AND (f.created_at<:cursor_created_after OR (f.created_at=:cursor_created_equal AND f.id<:cursor_id)))';$params['cursor_distance_after']=$decoded['d'];$params['cursor_distance_equal']=$decoded['d'];$params['cursor_created_after']=$decoded['c'];$params['cursor_created_equal']=$decoded['c'];$params['cursor_id']=$decoded['i'];}
         $sql.=' ORDER BY distance_m ASC,f.created_at DESC,f.id DESC LIMIT '.($limit+1);
         $s=Connection::get()->prepare($sql);$s->execute($params);$rows=$s->fetchAll();$hasMore=count($rows)>$limit;if($hasMore) array_pop($rows);
-        $flashes=array_map($this->map(...),$rows);$next=null;
+        $flashes=array_map(fn(array $row): array => $this->map($row,$viewerId),$rows);$next=null;
         if($hasMore&&$rows!==[]){$last=$rows[array_key_last($rows)];$next=base64_encode(json_encode(['d'=>(float)$last['distance_m'],'c'=>$last['created_at'],'i'=>(int)$last['id']],JSON_THROW_ON_ERROR));}
         return ['flashes'=>$flashes,'next_cursor'=>$next];
     }
@@ -56,7 +56,7 @@ final class FlashRepository
         $now=Date::now()->format('Y-m-d H:i:s');
         Connection::get()->prepare("INSERT INTO flash_observations (flash_id,user_id,observation_type_id,note,created_at,updated_at) VALUES (:flash_id,:user_id,:observation_type_id,:note,:created_at,:updated_at) ON DUPLICATE KEY UPDATE observation_type_id=VALUES(observation_type_id),note=VALUES(note),updated_at=VALUES(updated_at)")
         ->execute(['flash_id'=>$flashId,'user_id'=>$userId,'observation_type_id'=>$observationTypeId,'note'=>$note,'created_at'=>$now,'updated_at'=>$now]);
-        return $this->find($flashId,null);
+        return $this->find($flashId,null,$userId);
     }
 
     private function decodeCursor(?string $cursor): ?array
@@ -72,10 +72,16 @@ final class FlashRepository
         return "SELECT f.id,f.user_id,f.description,f.area_name,f.lifecycle_status,f.verification_state,f.moderation_status,f.expires_at,f.resolved_at,f.created_at,f.updated_at,ST_Y(f.location) AS lat,ST_X(f.location) AS lng".$distance.",c.category_key,c.name AS category_name,c.icon AS category_icon,u.display_name,COALESCE(SUM(ot.observation_key='still_happening'),0) AS confirm_count,COALESCE(SUM(ot.observation_key='cleared'),0) AS dispute_count,(SELECT COUNT(*) FROM flash_views fv WHERE fv.flash_id=f.id) AS engagement_views,(SELECT COUNT(*) FROM flash_share_events fse WHERE fse.flash_id=f.id) AS engagement_shares,(SELECT COUNT(*) FROM flash_helpful_reactions fhr WHERE fhr.flash_id=f.id) AS engagement_helpful FROM flashes f JOIN categories c ON c.id=f.category_id JOIN users u ON u.id=f.user_id LEFT JOIN flash_observations fo ON fo.flash_id=f.id LEFT JOIN observation_types ot ON ot.id=fo.observation_type_id";
     }
 
-    private function map(array $row): array
+    private function map(array $row,?int $viewerId=null): array
     {
         $status=$row['lifecycle_status'];if($status==='active'&&strtotime($row['expires_at'].' UTC')<=time())$status='expired';
         $intel=$this->intelligence->forFlash((int)$row['id']);
-        return ['id'=>(int)$row['id'],'category'=>['key'=>$row['category_key'],'name'=>$row['category_name'],'icon'=>$row['category_icon']],'status'=>$status,'verification_state'=>$row['verification_state'],'description'=>$row['description'],'location'=>['lat'=>(float)$row['lat'],'lng'=>(float)$row['lng'],'area_name'=>$row['area_name']],'distance_km'=>$row['distance_m']===null?null:round(((float)$row['distance_m'])/1000,2),'reporter'=>['id'=>(int)$row['user_id'],'display_name'=>$row['display_name']],'confirm_count'=>(int)$row['confirm_count'],'dispute_count'=>(int)$row['dispute_count'],'intelligence'=>['confidence_score'=>(float)$intel['confidence_score'],'state'=>$intel['state'],'last_evaluated_at'=>$intel['last_evaluated_at']],'engagement'=>['views'=>(int)$row['engagement_views'],'shares'=>(int)$row['engagement_shares'],'helpful'=>(int)$row['engagement_helpful'],'marked_helpful'=>false],'created_at'=>$row['created_at'],'expires_at'=>$row['expires_at'],'media'=>$this->media->forFlash((int)$row['id'])];
+        $markedHelpful=false;
+        if($viewerId!==null){
+            $stmt=Connection::get()->prepare('SELECT 1 FROM flash_helpful_reactions WHERE flash_id=:flash_id AND user_id=:user_id LIMIT 1');
+            $stmt->execute(['flash_id'=>(int)$row['id'],'user_id'=>$viewerId]);
+            $markedHelpful=(bool)$stmt->fetchColumn();
+        }
+        return ['id'=>(int)$row['id'],'category'=>['key'=>$row['category_key'],'name'=>$row['category_name'],'icon'=>$row['category_icon']],'status'=>$status,'verification_state'=>$row['verification_state'],'description'=>$row['description'],'location'=>['lat'=>(float)$row['lat'],'lng'=>(float)$row['lng'],'area_name'=>$row['area_name']],'distance_km'=>$row['distance_m']===null?null:round(((float)$row['distance_m'])/1000,2),'reporter'=>['id'=>(int)$row['user_id'],'display_name'=>$row['display_name']],'confirm_count'=>(int)$row['confirm_count'],'dispute_count'=>(int)$row['dispute_count'],'intelligence'=>['confidence_score'=>(float)$intel['confidence_score'],'state'=>$intel['state'],'last_evaluated_at'=>$intel['last_evaluated_at']],'engagement'=>['views'=>(int)$row['engagement_views'],'shares'=>(int)$row['engagement_shares'],'helpful'=>(int)$row['engagement_helpful'],'marked_helpful'=>$markedHelpful],'created_at'=>$row['created_at'],'expires_at'=>$row['expires_at'],'media'=>$this->media->forFlash((int)$row['id'])];
     }
 }
