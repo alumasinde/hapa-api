@@ -41,10 +41,12 @@ final class AdminRepository
         return $statement->fetchAll();
     }
 
-    public function updateLastLogin(int $id): void
-    {
-        Connection::get()->prepare('UPDATE admin_users SET last_login_at = :now, updated_at = :now WHERE id = :id')->execute(['id' => $id, 'now' => Date::now()->format('Y-m-d H:i:s')]);
-    }
+ public function updateLastLogin(int $id): void
+{
+    Connection::get()->prepare(
+        'UPDATE admin_users SET last_login_at = NOW(), updated_at = NOW() WHERE id = :id'
+    )->execute(['id' => $id]);
+}
 
     public function assignRole(int $adminId, string $roleKey): bool
     {
