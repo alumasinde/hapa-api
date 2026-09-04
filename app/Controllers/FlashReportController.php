@@ -19,6 +19,9 @@ final class FlashReportController
         private readonly FlashRepository $flashes = new FlashRepository(),
         private readonly FlashReportRepository $reports = new FlashReportRepository(),
         private readonly RateLimiter $limits = new RateLimiter(),
+        private readonly SettingsRepository $settings = new SettingsRepository(),
+        private readonly AdminModerationRepository $moderation = new AdminModerationRepository(),
+        private readonly AuditLogRepository $audit = new AuditLogRepository(),
     ) {
     }
 
