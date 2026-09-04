@@ -9,9 +9,10 @@ use App\Support\Date;
 
 final class SessionRepository
 {
-    public function create(int $userId, string $tokenHash, ?string $deviceId, ?string $platform, int $ttl): void
+    public function create(int $userId, string $tokenHash, ?string $deviceId, ?string $platform, int $ttl): int
     {
-        Connection::get()->prepare('INSERT INTO user_sessions (user_id, refresh_token_hash, device_id, platform, expires_at, created_at) VALUES (:user_id, :token_hash, :device_id, :platform, :expires_at, :created_at)')->execute([
+        $statement = Connection::get()->prepare('INSERT INTO user_sessions (user_id, refresh_token_hash, device_id, platform, expires_at, created_at) VALUES (:user_id, :token_hash, :device_id, :platform, :expires_at, :created_at)');
+        $statement->execute([
             'user_id' => $userId,
             'token_hash' => $tokenHash,
             'device_id' => $deviceId,
@@ -19,6 +20,8 @@ final class SessionRepository
             'expires_at' => Date::now()->modify(sprintf('+%d seconds', $ttl))->format('Y-m-d H:i:s'),
             'created_at' => Date::now()->format('Y-m-d H:i:s'),
         ]);
+
+        return (int) Connection::get()->lastInsertId();
     }
 
     public function findActive(string $tokenHash): ?array
@@ -27,6 +30,14 @@ final class SessionRepository
         $statement->execute(['token_hash' => $tokenHash]);
 
         return $statement->fetch() ?: null;
+    }
+
+    public function isActive(int $sessionId, int $userId): bool
+    {
+        $statement = Connection::get()->prepare('SELECT 1 FROM user_sessions WHERE id = :id AND user_id = :user_id AND revoked_at IS NULL AND expires_at > UTC_TIMESTAMP() LIMIT 1');
+        $statement->execute(['id' => $sessionId, 'user_id' => $userId]);
+
+        return (bool) $statement->fetchColumn();
     }
 
     public function rotate(int $id, string $newHash, int $ttl): void
