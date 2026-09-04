@@ -9,9 +9,7 @@ final class FlashRepository
 {
     private FlashMediaRepository $media;
     private FlashIntelligenceRepository $intelligence;
-    private FlashEngagementRepository $engagement;
-
-    public function __construct() { $this->media=new FlashMediaRepository(); $this->intelligence=new FlashIntelligenceRepository(); $this->engagement=new FlashEngagementRepository(); }
+    public function __construct() { $this->media=new FlashMediaRepository(); $this->intelligence=new FlashIntelligenceRepository(); }
 
     public function create(int $userId,int $categoryId,int $sourceTypeId,string $description,float $lat,float $lng,?string $areaName,int $expiresAfterMinutes): array
     {
