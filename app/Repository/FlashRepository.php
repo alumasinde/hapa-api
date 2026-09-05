@@ -19,6 +19,35 @@ final class FlashRepository
         return $this->find((int)$pdo->lastInsertId(),null) ?? throw new \RuntimeException('Flash was not created');
     }
 
+
+    public function findRecentDuplicate(int $userId,int $categoryId,string $description,float $lat,float $lng,int $windowSeconds=600,float $radiusMeters=250): ?array
+    {
+        $description=trim($description);
+        if($description==='') return null;
+
+        $pdo=Connection::get();
+        $sql="SELECT id FROM flashes
+              WHERE user_id=:user_id
+                AND category_id=:category_id
+                AND description=:description
+                AND created_at>=DATE_SUB(UTC_TIMESTAMP(), INTERVAL :window_seconds SECOND)
+                AND ST_Distance_Sphere(location,POINT(:lng,:lat))<=:radius_meters
+              ORDER BY id DESC
+              LIMIT 1";
+        $s=$pdo->prepare($sql);
+        $s->execute([
+            'user_id'=>$userId,
+            'category_id'=>$categoryId,
+            'description'=>$description,
+            'lat'=>$lat,
+            'lng'=>$lng,
+            'window_seconds'=>$windowSeconds,
+            'radius_meters'=>$radiusMeters,
+        ]);
+        $id=$s->fetchColumn();
+        return $id===false?null:$this->find((int)$id,null,$userId);
+    }
+
     public function find(int $id,?array $origin,?int $viewerId=null): ?array
     {
         $sql=$this->selectSql($origin)." WHERE f.id=:id AND f.moderation_status='visible' GROUP BY f.id LIMIT 1";
