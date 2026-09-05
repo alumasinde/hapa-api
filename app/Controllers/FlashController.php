@@ -72,6 +72,8 @@ final class FlashController
         $source=$this->sources->find($sourceKey);
         if(!$source) Response::error('VALIDATION_ERROR','Source is invalid',422,['source'=>'This source is invalid']);
         if(!$this->limits->allow('flash:create',(string)$userId,5,600)) Response::error('RATE_LIMITED','Too many flash reports',429);
+        $duplicate=$this->flashes->findRecentDuplicate($userId,(int)$category['id'],$description,$lat,$lng);
+        if($duplicate) Response::error('DUPLICATE_FLASH','A matching report was posted recently',409,['flash_id'=>(string)$duplicate['id'],'description'=>'A matching report already exists near this location']);
         $flash=$this->flashes->create($userId,(int)$category['id'],(int)$source['id'],$description,$lat,$lng,$areaName?:null,(int)$category['expires_after_minutes']);
         $this->intelligence->evaluate((int)$flash['id']);
         $flash=$this->flashes->find((int)$flash['id'],null,$userId) ?? $flash;
