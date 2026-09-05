@@ -18,8 +18,10 @@ The Flutter/mobile application should now be developed against this API contract
 ## Local server
 
 ```powershell
-php -S 127.0.0.1:8000 -t public
+php -S 0.0.0.0:8000 -t public
 ```
+
+For a physical phone, use the computer's LAN IPv4 address in the Flutter client, for example `http://192.168.x.x:8000/v1`. The server must bind to `0.0.0.0`, not `127.0.0.1`.
 
 ## Verification
 
