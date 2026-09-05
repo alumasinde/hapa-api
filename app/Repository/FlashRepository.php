@@ -20,7 +20,7 @@ final class FlashRepository
     }
 
 
-    public function findRecentDuplicate(int $userId,int $categoryId,string $description,float $lat,float $lng,int $windowSeconds=600,float $radiusMeters=250): ?array
+    public function findRecentDuplicate(int $userId,int $categoryId,string $description,float $lat,float $lng,float $radiusMeters=250): ?array
     {
         $description=trim($description);
         if($description==='') return null;
@@ -30,7 +30,7 @@ final class FlashRepository
               WHERE user_id=:user_id
                 AND category_id=:category_id
                 AND description=:description
-                AND created_at>=DATE_SUB(UTC_TIMESTAMP(), INTERVAL :window_seconds SECOND)
+                AND created_at>=DATE_SUB(UTC_TIMESTAMP(), INTERVAL 10 MINUTE)
                 AND ST_Distance_Sphere(location,POINT(:lng,:lat))<=:radius_meters
               ORDER BY id DESC
               LIMIT 1";
@@ -41,7 +41,6 @@ final class FlashRepository
             'description'=>$description,
             'lat'=>$lat,
             'lng'=>$lng,
-            'window_seconds'=>$windowSeconds,
             'radius_meters'=>$radiusMeters,
         ]);
         $id=$s->fetchColumn();
