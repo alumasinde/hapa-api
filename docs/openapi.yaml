@@ -43,7 +43,7 @@ paths:
     post:
       summary: Create flash
       security: [{bearerAuth: []}]
-      responses: {'201': {description: Created}}
+      responses: {'201': {description: Created}, '409': {description: Matching report already posted recently}}
   /flashes/{id}/helpful:
     post:
       summary: Mark a flash as helpful
